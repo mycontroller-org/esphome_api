@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	example "github.com/mycontroller-org/esphome_api/example"
+	examples "github.com/mycontroller-org/esphome_api/examples"
 )
 
 func main() {
-	client, err := example.GetClient(nil)
+	client, err := examples.GetClient(nil)
 	if err != nil {
 		log.Fatalln(err)
 	}

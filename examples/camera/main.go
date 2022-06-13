@@ -8,13 +8,13 @@ import (
 	"log"
 	"time"
 
-	example "github.com/mycontroller-org/esphome_api/example"
+	examples "github.com/mycontroller-org/esphome_api/examples"
 	"github.com/mycontroller-org/esphome_api/pkg/api"
 	"google.golang.org/protobuf/proto"
 )
 
 func main() {
-	client, err := example.GetClient(handleFuncImpl)
+	client, err := examples.GetClient(handleFuncImpl)
 	if err != nil {
 		log.Fatalln(err)
 	}

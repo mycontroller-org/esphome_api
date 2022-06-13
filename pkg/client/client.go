@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/mycontroller-org/esphome_api/pkg/api"
-	"github.com/mycontroller-org/esphome_api/pkg/model"
+	types "github.com/mycontroller-org/esphome_api/pkg/types"
 )
 
 // Error types
@@ -69,7 +69,7 @@ func (c *Client) Close() error {
 }
 
 // Hello func
-func (c *Client) Hello() (*model.HelloResponse, error) {
+func (c *Client) Hello() (*types.HelloResponse, error) {
 	response, err := c.SendAndWaitForResponse(&api.HelloRequest{
 		ClientInfo: c.ID,
 	}, api.HelloResponseTypeID)
@@ -80,7 +80,7 @@ func (c *Client) Hello() (*model.HelloResponse, error) {
 	if !ok {
 		return nil, fmt.Errorf("invalid response type:%T", response)
 	}
-	return &model.HelloResponse{
+	return &types.HelloResponse{
 		ApiVersionMajor: helloResponse.ApiVersionMajor,
 		ApiVersionMinor: helloResponse.ApiVersionMinor,
 		ServerInfo:      helloResponse.ServerInfo,
@@ -129,14 +129,14 @@ func (c *Client) LastMessageAt() time.Time {
 }
 
 // DeviceInfo queries the ESPHome device information.
-func (c *Client) DeviceInfo() (*model.DeviceInfo, error) {
+func (c *Client) DeviceInfo() (*types.DeviceInfo, error) {
 	message, err := c.SendAndWaitForResponse(&api.DeviceInfoRequest{}, api.DeviceInfoResponseTypeID)
 	if err != nil {
 		return nil, err
 	}
 
 	info := message.(*api.DeviceInfoResponse)
-	return &model.DeviceInfo{
+	return &types.DeviceInfo{
 		UsesPassword:    info.UsesPassword,
 		Name:            info.Name,
 		MacAddress:      info.MacAddress,
@@ -148,7 +148,7 @@ func (c *Client) DeviceInfo() (*model.DeviceInfo, error) {
 }
 
 // SubscribeLogs func
-func (c *Client) SubscribeLogs(level model.LogLevel) error {
+func (c *Client) SubscribeLogs(level types.LogLevel) error {
 	if err := c.Send(&api.SubscribeLogsRequest{
 		Level: api.LogLevel(level),
 	}); err != nil {

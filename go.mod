@@ -1,8 +1,5 @@
 module github.com/mycontroller-org/esphome_api
 
-go 1.16
+go 1.18
 
-require (
-	github.com/miekg/dns v1.1.42
-	google.golang.org/protobuf v1.26.0
-)
+require google.golang.org/protobuf v1.28.0

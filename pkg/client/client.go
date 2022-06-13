@@ -84,6 +84,7 @@ func (c *Client) Hello() (*model.HelloResponse, error) {
 		ApiVersionMajor: helloResponse.ApiVersionMajor,
 		ApiVersionMinor: helloResponse.ApiVersionMinor,
 		ServerInfo:      helloResponse.ServerInfo,
+		Name:            helloResponse.Name,
 	}, nil
 }
 

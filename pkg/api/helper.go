@@ -57,6 +57,23 @@ const (
 	ListEntitiesClimateResponseTypeID
 	ClimateStateResponseTypeID
 	ClimateCommandRequestTypeID
+	ListEntitiesNumberResponseTypeID
+	NumberStateResponseTypeID
+	NumberCommandRequestTypeID
+	ListEntitiesSelectResponseTypeID
+	SelectStateResponseTypeID
+	SelectCommandRequestTypeID
+	UnknownTypeID55
+	UnknownTypeID56
+	UnknownTypeID57
+	ListEntitiesLockResponseTypeID
+	LockStateResponseTypeID
+	LockCommandRequestTypeID
+	ListEntitiesButtonResponseTypeID
+	ButtonCommandRequestTypeID
+	ListEntitiesMediaPlayerResponseTypeID
+	MediaPlayerStateResponseTypeID
+	MediaPlayerCommandRequestTypeID
 )
 
 func TypeID(message interface{}) uint64 {
@@ -214,6 +231,48 @@ func TypeID(message interface{}) uint64 {
 	case ClimateCommandRequest:
 		return ClimateCommandRequestTypeID
 
+	case NumberCommandRequest:
+		return ClimateCommandRequestTypeID
+
+	case SelectCommandRequest:
+		return SelectCommandRequestTypeID
+
+	case ButtonCommandRequest:
+		return ButtonCommandRequestTypeID
+
+	case LockCommandRequest:
+		return LockCommandRequestTypeID
+
+	case MediaPlayerCommandRequest:
+		return MediaPlayerCommandRequestTypeID
+
+	case ListEntitiesNumberResponse:
+		return ListEntitiesNumberResponseTypeID
+
+	case NumberStateResponse:
+		return NumberStateResponseTypeID
+
+	case ListEntitiesSelectResponse:
+		return ListEntitiesSelectResponseTypeID
+
+	case SelectStateResponse:
+		return SelectStateResponseTypeID
+
+	case ListEntitiesLockResponse:
+		return ListEntitiesLockResponseTypeID
+
+	case LockStateResponse:
+		return LockStateResponseTypeID
+
+	case ListEntitiesButtonResponse:
+		return ListEntitiesButtonResponseTypeID
+
+	case ListEntitiesMediaPlayerResponse:
+		return ListEntitiesMediaPlayerResponseTypeID
+
+	case MediaPlayerStateResponse:
+		return MediaPlayerStateResponseTypeID
+
 	default:
 		return UndefinedTypeID
 	}
@@ -365,6 +424,57 @@ func NewMessageByTypeID(typeID uint64) proto.Message {
 
 	case 48:
 		return new(ClimateCommandRequest)
+
+	case 49:
+		return new(ListEntitiesNumberResponse)
+
+	case 50:
+		return new(NumberStateResponse)
+
+	case 51:
+		return new(NumberCommandRequest)
+
+	case 52:
+		return new(ListEntitiesSelectResponse)
+
+	case 53:
+		return new(SelectStateResponse)
+
+	case 54:
+		return new(SelectCommandRequest)
+
+	// case 55:
+	// 	return new(UnknownTypeID55)
+	//
+	// case 56:
+	// 	return new(UnknownTypeID56)
+	//
+	// case 57:
+	// 	return new(UnknownTypeID57)
+
+	case 58:
+		return new(ListEntitiesLockResponse)
+
+	case 59:
+		return new(LockStateResponse)
+
+	case 60:
+		return new(LockCommandRequest)
+
+	case 61:
+		return new(ListEntitiesButtonResponse)
+
+	case 62:
+		return new(ButtonCommandRequest)
+
+	case 63:
+		return new(ListEntitiesMediaPlayerResponse)
+
+	case 64:
+		return new(MediaPlayerStateResponse)
+
+	case 65:
+		return new(MediaPlayerCommandRequest)
 
 	default:
 		return nil

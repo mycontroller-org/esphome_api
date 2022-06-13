@@ -1,6 +1,6 @@
 syntax = "proto2";
-
 import "google/protobuf/descriptor.proto";
+
 
 enum APISourceType {
     SOURCE_BOTH = 0;

@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Marshal(message proto.Message) ([]byte, error) {
+func Marshal_(message proto.Message) ([]byte, error) {
 	messageBytes, err := proto.Marshal(message)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func Marshal(message proto.Message) ([]byte, error) {
 	return bytesPack[:index], nil
 }
 
-func ReadMessage(reader *bufio.Reader) (proto.Message, error) {
+func Unmarshal_(reader *bufio.Reader) (proto.Message, error) {
 	firstByte, err := reader.ReadByte()
 	if err != nil {
 		return nil, err

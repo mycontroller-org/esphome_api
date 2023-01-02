@@ -2,7 +2,6 @@ package client
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -11,13 +10,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/mycontroller-org/esphome_api/pkg/api"
+	"github.com/mycontroller-org/esphome_api/pkg/connection"
 	types "github.com/mycontroller-org/esphome_api/pkg/types"
-)
-
-// Error types
-var (
-	ErrPassword             = errors.New("esphome_api: invalid password")
-	ErrCommunicationTimeout = errors.New("esphome_api: communication timeout")
 )
 
 // Client struct.
@@ -31,11 +25,12 @@ type Client struct {
 	lastMessageAt        time.Time
 	handlerFunc          func(proto.Message)
 	CommunicationTimeout time.Duration
+	apiConn              connection.ApiConnection
 }
 
-// Init func
-func Init(clientID, addr string, timeout time.Duration, handlerFunc func(proto.Message)) (*Client, error) {
-	conn, err := net.DialTimeout("tcp", addr, timeout)
+// GetClient returns esphome api client
+func GetClient(clientID, address, encryptionKey string, timeout time.Duration, handlerFunc func(proto.Message)) (*Client, error) {
+	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +38,11 @@ func Init(clientID, addr string, timeout time.Duration, handlerFunc func(proto.M
 	// add noop func, if handler not defined
 	if handlerFunc == nil {
 		handlerFunc = func(msg proto.Message) {}
+	}
+
+	apiConn, err := connection.GetConnection(conn, timeout, encryptionKey)
+	if err != nil {
+		return nil, err
 	}
 
 	c := &Client{
@@ -53,7 +53,15 @@ func Init(clientID, addr string, timeout time.Duration, handlerFunc func(proto.M
 		stopChan:             make(chan bool),
 		handlerFunc:          handlerFunc,
 		CommunicationTimeout: timeout,
+		apiConn:              apiConn,
 	}
+
+	// call handshake, used in encrypted connection
+	err = apiConn.Handshake()
+	if err != nil {
+		return nil, err
+	}
+
 	go c.messageReader()
 	return c, nil
 }
@@ -103,7 +111,7 @@ func (c *Client) Login(password string) error {
 	}
 	connectResponse := message.(*api.ConnectResponse)
 	if connectResponse.InvalidPassword {
-		return ErrPassword
+		return types.ErrPassword
 	}
 
 	return nil
@@ -181,7 +189,7 @@ func (c *Client) messageReader() {
 
 func (c *Client) getMessage() error {
 	var message proto.Message
-	message, err := api.ReadMessage(c.reader)
+	message, err := c.apiConn.Read(c.reader)
 	if err == nil {
 		c.lastMessageAt = time.Now()
 		// check waiting map
@@ -244,20 +252,7 @@ func (c *Client) handleInternal(message proto.Message) bool {
 }
 
 func (c *Client) Send(message proto.Message) error {
-	packed, err := api.Marshal(message)
-	if err != nil {
-		return err
-	}
-	if err = c.conn.SetWriteDeadline(time.Now().Add(c.CommunicationTimeout)); err != nil {
-		return err
-	}
-	if _, err = c.conn.Write(packed); err != nil {
-		return err
-	}
-	if err = c.conn.SetWriteDeadline(time.Time{}); err != nil {
-		return err
-	}
-	return nil
+	return c.apiConn.Write(message)
 }
 
 func (c *Client) SendAndWaitForResponse(message proto.Message, messageType uint64) (proto.Message, error) {
@@ -276,7 +271,7 @@ func (c *Client) waitForMessage(messageType uint64) (proto.Message, error) {
 	case message := <-in:
 		return message, nil
 	case <-time.After(c.CommunicationTimeout):
-		return nil, ErrCommunicationTimeout
+		return nil, types.ErrCommunicationTimeout
 	}
 }
 

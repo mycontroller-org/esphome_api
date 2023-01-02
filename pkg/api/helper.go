@@ -74,6 +74,25 @@ const (
 	ListEntitiesMediaPlayerResponseTypeID
 	MediaPlayerStateResponseTypeID
 	MediaPlayerCommandRequestTypeID
+	SubscribeBluetoothLEAdvertisementsRequestID
+	BluetoothLEAdvertisementResponseID
+	BluetoothDeviceRequestID
+	BluetoothDeviceConnectionResponseID
+	BluetoothGATTGetServicesRequestID
+	BluetoothGATTGetServicesResponseID
+	BluetoothGATTGetServicesDoneResponseID
+	BluetoothGATTReadRequestID
+	BluetoothGATTReadResponseID
+	BluetoothGATTWriteRequestID
+	BluetoothGATTReadDescriptorRequestID
+	BluetoothGATTWriteDescriptorRequestID
+	BluetoothGATTNotifyRequestID
+	BluetoothGATTNotifyDataResponseID
+	SubscribeBluetoothConnectionsFreeRequestID
+	BluetoothConnectionsFreeResponseID
+	BluetoothGATTErrorResponseID
+	BluetoothGATTWriteResponseID
+	BluetoothGATTNotifyResponseID
 )
 
 func TypeID(message interface{}) uint64 {
@@ -272,6 +291,63 @@ func TypeID(message interface{}) uint64 {
 
 	case MediaPlayerStateResponse:
 		return MediaPlayerStateResponseTypeID
+
+	case SubscribeBluetoothLEAdvertisementsRequest:
+		return SubscribeBluetoothLEAdvertisementsRequestID
+
+	case BluetoothLEAdvertisementResponse:
+		return BluetoothLEAdvertisementResponseID
+
+	case BluetoothDeviceRequest:
+		return BluetoothDeviceRequestID
+
+	case BluetoothDeviceConnectionResponse:
+		return BluetoothDeviceConnectionResponseID
+
+	case BluetoothGATTGetServicesRequest:
+		return BluetoothGATTGetServicesRequestID
+
+	case BluetoothGATTGetServicesResponse:
+		return BluetoothGATTGetServicesResponseID
+
+	case BluetoothGATTGetServicesDoneResponse:
+		return BluetoothGATTGetServicesDoneResponseID
+
+	case BluetoothGATTReadRequest:
+		return BluetoothGATTReadRequestID
+
+	case BluetoothGATTReadResponse:
+		return BluetoothGATTReadResponseID
+
+	case BluetoothGATTWriteRequest:
+		return BluetoothGATTWriteRequestID
+
+	case BluetoothGATTReadDescriptorRequest:
+		return BluetoothGATTReadDescriptorRequestID
+
+	case BluetoothGATTWriteDescriptorRequest:
+		return BluetoothGATTWriteDescriptorRequestID
+
+	case BluetoothGATTNotifyRequest:
+		return BluetoothGATTNotifyRequestID
+
+	case BluetoothGATTNotifyDataResponse:
+		return BluetoothGATTNotifyDataResponseID
+
+	case SubscribeBluetoothConnectionsFreeRequest:
+		return SubscribeBluetoothConnectionsFreeRequestID
+
+	case BluetoothConnectionsFreeResponse:
+		return BluetoothConnectionsFreeResponseID
+
+	case BluetoothGATTErrorResponse:
+		return BluetoothGATTErrorResponseID
+
+	case BluetoothGATTWriteResponse:
+		return BluetoothGATTWriteResponseID
+
+	case BluetoothGATTNotifyResponse:
+		return BluetoothGATTNotifyResponseID
 
 	default:
 		return UndefinedTypeID
@@ -475,6 +551,63 @@ func NewMessageByTypeID(typeID uint64) proto.Message {
 
 	case 65:
 		return new(MediaPlayerCommandRequest)
+
+	case 66:
+		return new(SubscribeBluetoothLEAdvertisementsRequest)
+
+	case 67:
+		return new(BluetoothLEAdvertisementResponse)
+
+	case 68:
+		return new(BluetoothDeviceRequest)
+
+	case 69:
+		return new(BluetoothDeviceConnectionResponse)
+
+	case 70:
+		return new(BluetoothGATTGetServicesRequest)
+
+	case 71:
+		return new(BluetoothGATTGetServicesResponse)
+
+	case 72:
+		return new(BluetoothGATTGetServicesDoneResponse)
+
+	case 73:
+		return new(BluetoothGATTReadRequest)
+
+	case 74:
+		return new(BluetoothGATTReadResponse)
+
+	case 75:
+		return new(BluetoothGATTWriteRequest)
+
+	case 76:
+		return new(BluetoothGATTReadDescriptorRequest)
+
+	case 77:
+		return new(BluetoothGATTWriteDescriptorRequest)
+
+	case 78:
+		return new(BluetoothGATTNotifyRequest)
+
+	case 79:
+		return new(BluetoothGATTNotifyDataResponse)
+
+	case 80:
+		return new(SubscribeBluetoothConnectionsFreeRequest)
+
+	case 81:
+		return new(BluetoothConnectionsFreeResponse)
+
+	case 82:
+		return new(BluetoothGATTErrorResponse)
+
+	case 83:
+		return new(BluetoothGATTWriteResponse)
+
+	case 84:
+		return new(BluetoothGATTNotifyResponse)
 
 	default:
 		return nil

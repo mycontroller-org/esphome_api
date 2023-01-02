@@ -1,10 +1,18 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/mycontroller-org/esphome_api/pkg/api"
 	"google.golang.org/protobuf/proto"
+)
+
+// Error types
+var (
+	ErrPassword              = errors.New("esphome_api: invalid password")
+	ErrCommunicationTimeout  = errors.New("esphome_api: communication timeout")
+	ErrConnRequireEncryption = errors.New("esphome_api: connection requires encryption")
 )
 
 // DeviceInfo struct

@@ -15,6 +15,9 @@ var (
 	ErrConnRequireEncryption = errors.New("esphome_api: connection requires encryption")
 )
 
+// call back function used to report received messages
+type CallBackFunc func(proto.Message)
+
 // DeviceInfo struct
 type DeviceInfo struct {
 	Name            string

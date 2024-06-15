@@ -1,0 +1,2 @@
+# this version number will be used for development builds
+esphomectl=1.4

@@ -23,21 +23,21 @@ type Client struct {
 	waitMapMutex         sync.RWMutex
 	waitMap              map[uint64]chan proto.Message
 	lastMessageAt        time.Time
-	handlerFunc          func(proto.Message)
+	callBackFunc         types.CallBackFunc
 	CommunicationTimeout time.Duration
 	apiConn              connection.ApiConnection
 }
 
 // GetClient returns esphome api client
-func GetClient(clientID, address, encryptionKey string, timeout time.Duration, handlerFunc func(proto.Message)) (*Client, error) {
+func GetClient(clientID, address, encryptionKey string, timeout time.Duration, callBackFunc types.CallBackFunc) (*Client, error) {
 	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err != nil {
 		return nil, err
 	}
 
 	// add noop func, if handler not defined
-	if handlerFunc == nil {
-		handlerFunc = func(msg proto.Message) {}
+	if callBackFunc == nil {
+		callBackFunc = func(msg proto.Message) {}
 	}
 
 	apiConn, err := connection.GetConnection(conn, timeout, encryptionKey)
@@ -51,7 +51,7 @@ func GetClient(clientID, address, encryptionKey string, timeout time.Duration, h
 		reader:               bufio.NewReader(conn),
 		waitMap:              make(map[uint64]chan proto.Message),
 		stopChan:             make(chan bool),
-		handlerFunc:          handlerFunc,
+		callBackFunc:         callBackFunc,
 		CommunicationTimeout: timeout,
 		apiConn:              apiConn,
 	}
@@ -204,8 +204,8 @@ func (c *Client) getMessage() error {
 		if c.handleInternal(message) {
 			return nil
 		} else if c.isExternal(message) {
-			if c.handlerFunc != nil {
-				c.handlerFunc(message)
+			if c.callBackFunc != nil {
+				c.callBackFunc(message)
 				return nil
 			}
 		}

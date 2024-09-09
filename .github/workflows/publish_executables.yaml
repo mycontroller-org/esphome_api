@@ -52,7 +52,7 @@ jobs:
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GH_TOKEN }}"
-          automatic_release_tag: development
+          automatic_release_tag: main-devel
           prerelease: true
           title: "Development Build - Pre Release"
           files: |

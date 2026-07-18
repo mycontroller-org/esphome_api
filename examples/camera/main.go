@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
 	examples "github.com/mycontroller-org/esphome_api/examples"
@@ -34,7 +34,7 @@ func main() {
 
 	// if image received, convert it to jpeg
 	if received {
-		err = ioutil.WriteFile("camera_image.jpeg", buffer.Bytes(), fs.ModePerm)
+		err = os.WriteFile("camera_image.jpeg", buffer.Bytes(), fs.ModePerm)
 		if err != nil {
 			fmt.Println(err)
 		}

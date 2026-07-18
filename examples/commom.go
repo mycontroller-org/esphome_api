@@ -18,7 +18,7 @@ const (
 
 var (
 	HostAddressFlag   = flag.String("address", "", "esphome node hostname or IP with port. example: my_esphome.local:6053")
-	PasswordFlag      = flag.String("password", "", "esphome node API password")
+	PasswordFlag      = flag.String("password", "", "esphome node API password (removed in ESPHome 2026.1.0)")
 	EncryptionKeyFlag = flag.String("encryption-key", "", "esphome node API encryption key")
 	TimeoutFlag       = flag.Duration("timeout", 10*time.Second, "communication timeout")
 )
@@ -54,7 +54,12 @@ func GetClient(handlerFunc func(msg proto.Message)) (*esphome.Client, error) {
 		return nil, err
 	}
 
-	if err = client.Login(*PasswordFlag); err != nil {
+	if *PasswordFlag != "" {
+		err = client.Login(*PasswordFlag)
+	} else {
+		_, err = client.Hello()
+	}
+	if err != nil {
 		_ = client.Close()
 		return nil, err
 	}

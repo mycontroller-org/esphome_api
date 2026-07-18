@@ -81,11 +81,17 @@ func GetClient(cfg *cliTY.DeviceConfig, callBackFunc TY.CallBackFunc) (*client.C
 	if err != nil {
 		return nil, err
 	}
-	if cfg.GetPassword() != "" {
-		err = _client.Login(cfg.GetPassword())
-		if err != nil {
-			return nil, err
-		}
+	password := cfg.GetPassword()
+	if password != "" {
+		fmt.Fprintln(ioStreams.ErrOut,
+			"WARNING: API password auth is deprecated and was removed in ESPHome 2026.1.0. Prefer --encryption-key / encryptionKey.")
+		err = _client.Login(password) // legacy password auth (pre-2026.1)
+	} else {
+		_, err = _client.Hello()
+	}
+	if err != nil {
+		_ = _client.Close()
+		return nil, err
 	}
 
 	return _client, nil

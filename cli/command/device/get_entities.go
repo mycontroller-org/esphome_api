@@ -93,7 +93,7 @@ var getEntitiesCmd = &cobra.Command{
 					{Title: "name", ValuePath: "name"},
 					{Title: "object id", ValuePath: "objectId"},
 					{Title: "key", ValuePath: "key"},
-					{Title: "unique id", ValuePath: "uniqueId"},
+					{Title: "device id", ValuePath: "deviceId"},
 					{Title: "effects", ValuePath: "effects"},
 					{Title: "icon", ValuePath: "icon"},
 				}
@@ -104,7 +104,7 @@ var getEntitiesCmd = &cobra.Command{
 					{Title: "name", ValuePath: "name"},
 					{Title: "object id", ValuePath: "objectId"},
 					{Title: "key", ValuePath: "key"},
-					{Title: "unique id", ValuePath: "uniqueId"},
+					{Title: "device id", ValuePath: "deviceId"},
 					{Title: "device class", ValuePath: "deviceClass"},
 				}
 				printer.Print(cmd.OutOrStdout(), headers, _sensors, rootCmd.HideHeader, rootCmd.OutputFormat, rootCmd.Pretty)

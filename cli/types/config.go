@@ -18,25 +18,39 @@ type Config struct {
 }
 
 type DeviceInfo struct {
-	Name            string    `yaml:"name"`
-	Model           string    `yaml:"model"`
-	MacAddress      string    `yaml:"macAddress"`
-	EsphomeVersion  string    `yaml:"esphomeVersion"`
-	CompilationTime string    `yaml:"compilationTime"`
-	UsesPassword    bool      `yaml:"usesPassword"`
-	HasDeepSleep    bool      `yaml:"hasDeepSleep"`
-	StatusOn        time.Time `yaml:"statusOn"`
+	Name                   string    `yaml:"name"`
+	Model                  string    `yaml:"model"`
+	MacAddress             string    `yaml:"macAddress"`
+	EsphomeVersion         string    `yaml:"esphomeVersion"`
+	CompilationTime        string    `yaml:"compilationTime"`
+	UsesPassword           bool      `yaml:"usesPassword"` // removed in ESPHome 2026.1.0
+	HasDeepSleep           bool      `yaml:"hasDeepSleep"`
+	FriendlyName           string    `yaml:"friendlyName,omitempty"`
+	Manufacturer           string    `yaml:"manufacturer,omitempty"`
+	ProjectName            string    `yaml:"projectName,omitempty"`
+	ProjectVersion         string    `yaml:"projectVersion,omitempty"`
+	SuggestedArea          string    `yaml:"suggestedArea,omitempty"`
+	BluetoothMacAddress    string    `yaml:"bluetoothMacAddress,omitempty"`
+	ApiEncryptionSupported bool      `yaml:"apiEncryptionSupported,omitempty"`
+	StatusOn               time.Time `yaml:"statusOn"`
 }
 
 func (di *DeviceInfo) Clone() DeviceInfo {
 	return DeviceInfo{
-		Name:            di.Name,
-		Model:           di.Model,
-		MacAddress:      di.MacAddress,
-		EsphomeVersion:  di.EsphomeVersion,
-		CompilationTime: di.CompilationTime,
-		UsesPassword:    di.UsesPassword,
-		HasDeepSleep:    di.HasDeepSleep,
+		Name:                   di.Name,
+		Model:                  di.Model,
+		MacAddress:             di.MacAddress,
+		EsphomeVersion:         di.EsphomeVersion,
+		CompilationTime:        di.CompilationTime,
+		UsesPassword:           di.UsesPassword,
+		HasDeepSleep:           di.HasDeepSleep,
+		FriendlyName:           di.FriendlyName,
+		Manufacturer:           di.Manufacturer,
+		ProjectName:            di.ProjectName,
+		ProjectVersion:         di.ProjectVersion,
+		SuggestedArea:          di.SuggestedArea,
+		BluetoothMacAddress:    di.BluetoothMacAddress,
+		ApiEncryptionSupported: di.ApiEncryptionSupported,
 	}
 }
 

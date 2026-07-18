@@ -7,7 +7,7 @@ import (
 
 var (
 	gitCommit string
-	version   string
+	version   string = "devel"
 	buildDate string
 )
 

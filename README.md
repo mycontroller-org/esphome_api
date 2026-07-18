@@ -10,10 +10,22 @@ commands, subscribing to state updates, and receiving device information.
 
 ## Installation
 
-To install the `esphome_api` library, use the following command:
+Library:
 
 ```bash
-go build -o esphome ./cli/main.go
+go get github.com/mycontroller-org/esphome_api@latest
+```
+
+CLI (`esphomectl`):
+
+```bash
+go build -trimpath -ldflags "-s -w" -o esphomectl ./cli/main.go
+```
+
+Release binaries (multi-platform, version ldflags):
+
+```bash
+./scripts/generate_executables.sh
 ```
 
 ## Usage
@@ -47,15 +59,19 @@ if err != nil {
 defer client.Close()
 ```
 
-### 3. Connect and Authenticate (if required)
+### 3. Hello
 
 ```go
-// If your device requires authentication, log in with the password
-password := "YOUR_PASSWORD"
-if err := client.Login(password); err != nil {
+// Required after GetClient on modern devices.
+if _, err := client.Hello(); err != nil {
         log.Fatalln(err)
 }
+
+// Deprecated (pre-2026.1 password auth only):
+// if err := client.Login("YOUR_PASSWORD"); err != nil { ... }
 ```
+
+See [docs/API_PROTO_UPDATE_2024.5.0_to_2026.7.0.md](docs/API_PROTO_UPDATE_2024.5.0_to_2026.7.0.md) for protocol changes and breaking changes.
 
 ### 4. Send Commands and Receive State Updates
 
@@ -105,21 +121,22 @@ tool, which utilizes the `esphome_api` library:
 active: esphome.local:6053
 devices:
     - address: esphome.local:6053
-      password: BASE64/YOUR_ENCODED_PASSWORD
       encryptionKey: YOUR_ENCRYPTION_KEY
       timeout: 10s
       info:
           name: My ESPHome Device
           model: NodeMCU
           macAddress: AC:BC:32:89:0E:A9
-          esphomeVersion: "1.15.0"
-          compilationTime: "2023-10-26T10:00:00"
-          usesPassword: true
+          esphomeVersion: "2026.7.0"
+          compilationTime: "2026-01-15T10:00:00"
+          usesPassword: false
           hasDeepSleep: false
-          statusOn: 2023-10-26T12:00:00+05:30
+          apiEncryptionSupported: true
+          statusOn: 2026-07-18T12:00:00+05:30
 ```
 
-**Note:** The password is encoded in Base64 format. You can encode your password using the following command:
+**Note:** Prefer `encryptionKey`. API password auth was removed in ESPHome 2026.1.0.
+If you still need a password for older firmware, store it Base64-encoded:
 
 ```bash
 echo -n "YOUR_PASSWORD" | base64

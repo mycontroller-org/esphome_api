@@ -45,7 +45,7 @@ var getEntitiesCmd = &cobra.Command{
 			default:
 				_, _deviceClass, err := filterUtils.GetValueByKeyPath(entity, "deviceClass")
 				if err != nil {
-					fmt.Fprintln(cmd.ErrOrStderr(), "error:", err)
+					_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "error:", err)
 					return
 				}
 				deviceClass := convertor.ToString(_deviceClass)
@@ -60,13 +60,13 @@ var getEntitiesCmd = &cobra.Command{
 
 		client, err := rootCmd.GetActiveClient(collectEntities)
 		if err != nil {
-			fmt.Fprintln(cmd.ErrOrStderr(), "error:", err.Error())
+			_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "error:", err.Error())
 			return
 		}
 
 		err = client.ListEntities()
 		if err != nil {
-			fmt.Fprintln(cmd.ErrOrStderr(), "error:", err.Error())
+			_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "error:", err.Error())
 			return
 		}
 
@@ -79,13 +79,13 @@ var getEntitiesCmd = &cobra.Command{
 		}
 
 		if len(entities) == 0 {
-			fmt.Fprintln(cmd.OutOrStdout(), "No resource found")
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "No resource found")
 			return
 		}
 
 		for k, _sensors := range entities {
-			fmt.Fprintln(cmd.OutOrStdout())
-			fmt.Fprintln(cmd.OutOrStdout(), strings.ToUpper(k))
+			_, _ = fmt.Fprintln(cmd.OutOrStdout())
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), strings.ToUpper(k))
 
 			switch k {
 			case "light":
@@ -93,7 +93,7 @@ var getEntitiesCmd = &cobra.Command{
 					{Title: "name", ValuePath: "name"},
 					{Title: "object id", ValuePath: "objectId"},
 					{Title: "key", ValuePath: "key"},
-					{Title: "unique id", ValuePath: "uniqueId"},
+					{Title: "device id", ValuePath: "deviceId"},
 					{Title: "effects", ValuePath: "effects"},
 					{Title: "icon", ValuePath: "icon"},
 				}
@@ -104,7 +104,7 @@ var getEntitiesCmd = &cobra.Command{
 					{Title: "name", ValuePath: "name"},
 					{Title: "object id", ValuePath: "objectId"},
 					{Title: "key", ValuePath: "key"},
-					{Title: "unique id", ValuePath: "uniqueId"},
+					{Title: "device id", ValuePath: "deviceId"},
 					{Title: "device class", ValuePath: "deviceClass"},
 				}
 				printer.Print(cmd.OutOrStdout(), headers, _sensors, rootCmd.HideHeader, rootCmd.OutputFormat, rootCmd.Pretty)

@@ -1,6 +1,6 @@
 module github.com/mycontroller-org/esphome_api
 
-go 1.21
+go 1.26
 
 require (
 	github.com/flynn/noise v1.0.1-0.20220214164934-d803f5c4b0f4

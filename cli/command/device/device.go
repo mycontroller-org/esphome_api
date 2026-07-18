@@ -27,21 +27,21 @@ var deviceContextCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			if rootCmd.CONFIG.Active == "" {
-				fmt.Fprintln(cmd.OutOrStdout(), "No resource found")
+				_, _ = fmt.Fprintln(cmd.OutOrStdout(), "No resource found")
 				return
 			}
-			fmt.Fprintf(cmd.ErrOrStderr(), "Active node '%s'\n", rootCmd.CONFIG.Active)
+			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Active node '%s'\n", rootCmd.CONFIG.Active)
 			return
 		}
 		rootCmd.CONFIG.Active = strings.TrimSpace(args[0])
 		client, err := rootCmd.GetActiveClient(nil)
 		if err != nil {
-			fmt.Fprintln(cmd.ErrOrStderr(), "Error on login", err)
+			_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "Error on login", err)
 			return
 		}
 		if client != nil {
 			rootCmd.WriteConfigFile()
-			fmt.Fprintf(cmd.OutOrStdout(), "Switched to '%s'\n", rootCmd.CONFIG.Active)
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Switched to '%s'\n", rootCmd.CONFIG.Active)
 		}
 	},
 }
@@ -54,7 +54,7 @@ var getDevicesCmd = &cobra.Command{
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(rootCmd.CONFIG.Devices) == 0 {
-			fmt.Fprintln(cmd.OutOrStdout(), "No resource found")
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "No resource found")
 			return
 		}
 		headers := []printer.Header{

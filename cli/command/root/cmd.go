@@ -81,11 +81,17 @@ func GetClient(cfg *cliTY.DeviceConfig, callBackFunc TY.CallBackFunc) (*client.C
 	if err != nil {
 		return nil, err
 	}
-	if cfg.GetPassword() != "" {
-		err = _client.Login(cfg.GetPassword())
-		if err != nil {
-			return nil, err
-		}
+	password := cfg.GetPassword()
+	if password != "" {
+		_, _ = fmt.Fprintln(ioStreams.ErrOut,
+			"WARNING: API password auth is deprecated and was removed in ESPHome 2026.1.0. Prefer --encryption-key / encryptionKey.")
+		err = _client.Login(password) // legacy password auth (pre-2026.1)
+	} else {
+		_, err = _client.Hello()
+	}
+	if err != nil {
+		_ = _client.Close()
+		return nil, err
 	}
 
 	return _client, nil
@@ -94,7 +100,7 @@ func GetClient(cfg *cliTY.DeviceConfig, callBackFunc TY.CallBackFunc) (*client.C
 func Execute(streams clientTY.IOStreams) {
 	ioStreams = streams
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(ioStreams.ErrOut, err)
+		_, _ = fmt.Fprintln(ioStreams.ErrOut, err)
 		os.Exit(1)
 	}
 }
@@ -109,11 +115,12 @@ func WriteConfigFile() {
 
 	configBytes, err := yaml.Marshal(CONFIG)
 	if err != nil {
-		fmt.Fprintf(ioStreams.ErrOut, "error on config file marshal. error:[%s]\n", err.Error())
+		_, _ = fmt.Fprintf(ioStreams.ErrOut, "error on config file marshal. error:[%s]\n", err.Error())
+		return
 	}
 	err = os.WriteFile(cfgFile, configBytes, os.ModePerm)
 	if err != nil {
-		fmt.Fprintf(ioStreams.ErrOut, "error on writing config file to disk, filename:%s, error:[%s]\n", cfgFile, err.Error())
+		_, _ = fmt.Fprintf(ioStreams.ErrOut, "error on writing config file to disk, filename:%s, error:[%s]\n", cfgFile, err.Error())
 	}
 }
 
@@ -142,7 +149,7 @@ func loadConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		err = viper.Unmarshal(&CONFIG)
 		if err != nil {
-			fmt.Fprint(ioStreams.ErrOut, "error on unmarshal of config\n", err)
+			_, _ = fmt.Fprint(ioStreams.ErrOut, "error on unmarshal of config\n", err)
 		}
 	}
 }

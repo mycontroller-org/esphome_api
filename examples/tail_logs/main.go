@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	fmt.Println("Listening logs, will terminate in", *monitoringDuration)
 

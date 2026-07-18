@@ -53,7 +53,7 @@ do
   GOARCH=${platform_raw[1]}
   package_name="esphomectl-${GOOS}-${GOARCH}"
 
-  env GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BUILD_DIR}/${BINARY_DIR}/${package_name} -ldflags "-s -w $LD_FLAGS" cli/main.go
+  env GOOS=${GOOS} GOARCH=${GOARCH} go build -trimpath -o ${BUILD_DIR}/${BINARY_DIR}/${package_name} -ldflags "-s -w $LD_FLAGS" cli/main.go
   if [ $? -ne 0 ]; then
     echo 'an error has occurred. aborting the build process'
     exit 1

@@ -2,8 +2,10 @@ package client
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"net"
+	"os"
 	"sync"
 	"time"
 
@@ -14,18 +16,27 @@ import (
 	types "github.com/mycontroller-org/esphome_api/pkg/types"
 )
 
+// API version sent in HelloRequest.
+const (
+	ClientAPIVersionMajor uint32 = 1
+	ClientAPIVersionMinor uint32 = 14
+)
+
 // Client struct.
 type Client struct {
 	ID                   string
 	conn                 net.Conn
 	reader               *bufio.Reader
-	stopChan             chan bool
+	stopChan             chan struct{} // closed by requestStop
+	stopOnce             sync.Once
 	waitMapMutex         sync.RWMutex
 	waitMap              map[uint64]chan proto.Message
 	lastMessageAt        time.Time
 	callBackFunc         types.CallBackFunc
 	CommunicationTimeout time.Duration
 	apiConn              connection.ApiConnection
+	// DisconnectReason from device DisconnectRequest (0 if none).
+	DisconnectReason api.DisconnectReason
 }
 
 // GetClient returns esphome api client
@@ -50,7 +61,7 @@ func GetClient(clientID, address, encryptionKey string, timeout time.Duration, c
 		conn:                 conn,
 		reader:               bufio.NewReader(conn),
 		waitMap:              make(map[uint64]chan proto.Message),
-		stopChan:             make(chan bool),
+		stopChan:             make(chan struct{}),
 		callBackFunc:         callBackFunc,
 		CommunicationTimeout: timeout,
 		apiConn:              apiConn,
@@ -69,17 +80,23 @@ func GetClient(clientID, address, encryptionKey string, timeout time.Duration, c
 // Close the client
 func (c *Client) Close() error {
 	_, err := c.SendAndWaitForResponse(&api.DisconnectRequest{}, api.DisconnectResponseTypeID)
-	select {
-	case c.stopChan <- true:
-	default:
-	}
+	c.requestStop()
 	return err
+}
+
+func (c *Client) requestStop() {
+	c.stopOnce.Do(func() {
+		close(c.stopChan)
+		_ = c.conn.SetDeadline(time.Now()) // unblock Read
+	})
 }
 
 // Hello func
 func (c *Client) Hello() (*types.HelloResponse, error) {
 	response, err := c.SendAndWaitForResponse(&api.HelloRequest{
-		ClientInfo: c.ID,
+		ClientInfo:      c.ID,
+		ApiVersionMajor: ClientAPIVersionMajor,
+		ApiVersionMinor: ClientAPIVersionMinor,
 	}, api.HelloResponseTypeID)
 	if err != nil {
 		return nil, err
@@ -96,24 +113,32 @@ func (c *Client) Hello() (*types.HelloResponse, error) {
 	}, nil
 }
 
-// Login func
+// Login uses the legacy API password. Removed in ESPHome 2026.1.0; use Hello() instead.
 func (c *Client) Login(password string) error {
-	_, err := c.Hello()
-	if err != nil {
+	if _, err := c.Hello(); err != nil {
 		return err
 	}
 
-	message, err := c.SendAndWaitForResponse(&api.ConnectRequest{
-		Password: password,
-	}, api.ConnectResponseTypeID)
+	// AuthenticationRequest/Response are deprecated in api.proto (ESPHome 2026.1.0+)
+	// but still required for pre-2026.1 devices that use api password.
+	message, err := c.SendAndWaitForResponse(
+		&api.AuthenticationRequest{Password: password}, //nolint:staticcheck // SA1019: legacy password auth
+		api.AuthenticationResponseTypeID,
+	)
 	if err != nil {
+		if errors.Is(err, types.ErrCommunicationTimeout) {
+			// No reply: treat as modern device without password auth.
+			return nil
+		}
 		return err
 	}
-	connectResponse := message.(*api.ConnectResponse)
-	if connectResponse.InvalidPassword {
+	authResponse, ok := message.(*api.AuthenticationResponse) //nolint:staticcheck // SA1019: legacy password auth
+	if !ok {
+		return fmt.Errorf("invalid response type:%T", message)
+	}
+	if authResponse.InvalidPassword {
 		return types.ErrPassword
 	}
-
 	return nil
 }
 
@@ -144,15 +169,53 @@ func (c *Client) DeviceInfo() (*types.DeviceInfo, error) {
 	}
 
 	info := message.(*api.DeviceInfoResponse)
-	return &types.DeviceInfo{
-		UsesPassword:    info.UsesPassword,
-		Name:            info.Name,
-		MacAddress:      info.MacAddress,
-		EsphomeVersion:  info.EsphomeVersion,
-		CompilationTime: info.CompilationTime,
-		Model:           info.Model,
-		HasDeepSleep:    info.HasDeepSleep,
-	}, nil
+	di := &types.DeviceInfo{
+		UsesPassword:               info.UsesPassword, //nolint:staticcheck // SA1019: still reported by older firmware
+		Name:                       info.Name,
+		MacAddress:                 info.MacAddress,
+		EsphomeVersion:             info.EsphomeVersion,
+		CompilationTime:            info.CompilationTime,
+		Model:                      info.Model,
+		HasDeepSleep:               info.HasDeepSleep,
+		ProjectName:                info.ProjectName,
+		ProjectVersion:             info.ProjectVersion,
+		WebserverPort:              info.WebserverPort,
+		Manufacturer:               info.Manufacturer,
+		FriendlyName:               info.FriendlyName,
+		SuggestedArea:              info.SuggestedArea,
+		BluetoothMacAddress:        info.BluetoothMacAddress,
+		BluetoothProxyFeatureFlags: info.BluetoothProxyFeatureFlags,
+		VoiceAssistantFeatureFlags: info.VoiceAssistantFeatureFlags,
+		ApiEncryptionSupported:     info.ApiEncryptionSupported,
+		ApiEncryptionProvisionable: info.ApiEncryptionProvisionable,
+		ZwaveProxyFeatureFlags:     info.ZwaveProxyFeatureFlags,
+		ZwaveHomeId:                info.ZwaveHomeId,
+	}
+
+	if area := info.GetArea(); area != nil {
+		di.Area = &types.AreaInfo{
+			AreaID: area.AreaId,
+			Name:   area.Name,
+		}
+	}
+	for _, a := range info.GetAreas() {
+		di.Areas = append(di.Areas, types.AreaInfo{AreaID: a.AreaId, Name: a.Name})
+	}
+	for _, d := range info.GetDevices() {
+		di.Devices = append(di.Devices, types.SubDeviceInfo{
+			DeviceID: d.DeviceId,
+			Name:     d.Name,
+			AreaID:   d.AreaId,
+		})
+	}
+	for _, sp := range info.GetSerialProxies() {
+		di.SerialProxies = append(di.SerialProxies, types.SerialProxyInfo{
+			Name:     sp.Name,
+			PortType: int32(sp.PortType),
+		})
+	}
+
+	return di, nil
 }
 
 // SubscribeLogs func
@@ -171,9 +234,23 @@ func (c *Client) ListEntities() error {
 	return c.Send(&api.ListEntitiesRequest{})
 }
 
+func (c *Client) NoiseEncryptionSetKey(key []byte) (*api.NoiseEncryptionSetKeyResponse, error) {
+	message, err := c.SendAndWaitForResponse(&api.NoiseEncryptionSetKeyRequest{
+		Key: key,
+	}, api.NoiseEncryptionSetKeyResponseTypeID)
+	if err != nil {
+		return nil, err
+	}
+	resp, ok := message.(*api.NoiseEncryptionSetKeyResponse)
+	if !ok {
+		return nil, fmt.Errorf("invalid response type:%T", message)
+	}
+	return resp, nil
+}
+
 // messageReader reads message from the node
 func (c *Client) messageReader() {
-	defer c.conn.Close()
+	defer func() { _ = c.conn.Close() }()
 	for {
 		select {
 		case <-c.stopChan:
@@ -191,8 +268,12 @@ func (c *Client) getMessage() error {
 	var message proto.Message
 	message, err := c.apiConn.Read(c.reader)
 	if err == nil {
+		// ignore empty messages (can happen during encryption handshake)
+		if message == nil {
+			return nil
+		}
 		c.lastMessageAt = time.Now()
-		// check waiting map
+
 		c.waitMapMutex.Lock()
 		in, found := c.waitMap[api.TypeID(message)]
 		c.waitMapMutex.Unlock()
@@ -200,55 +281,72 @@ func (c *Client) getMessage() error {
 			in <- message
 		}
 
-		// forward to other parties
 		if c.handleInternal(message) {
 			return nil
-		} else if c.isExternal(message) {
-			if c.callBackFunc != nil {
-				c.callBackFunc(message)
-				return nil
-			}
+		}
+		if c.isExternal(message) && c.callBackFunc != nil {
+			c.callBackFunc(message)
 		}
 	}
 
 	return err
 }
 
+// isExternal is true when the message should be passed to callBackFunc.
 func (c *Client) isExternal(message proto.Message) bool {
 	switch message.(type) {
 	case
-		*api.PingResponse,
 		*api.HelloResponse,
-		*api.ConnectResponse,
+		*api.AuthenticationResponse, //nolint:staticcheck // SA1019: filter legacy auth replies
+		*api.DisconnectResponse,
+		*api.PingResponse,
 		*api.DeviceInfoResponse,
-		*api.DisconnectResponse:
+		*api.NoiseEncryptionSetKeyResponse:
 		return false
 	}
 	return true
 }
 
+// handleInternal replies to device protocol requests (ping, disconnect, get time).
 func (c *Client) handleInternal(message proto.Message) bool {
-	switch message.(type) {
+	switch msg := message.(type) {
 	case *api.DisconnectRequest:
+		c.DisconnectReason = msg.Reason
 		_ = c.Send(&api.DisconnectResponse{})
-		c.Close()
+		c.requestStop()
 		return true
 
 	case *api.PingRequest:
 		_ = c.Send(&api.PingResponse{})
 		return true
 
-	case *api.HelloRequest:
-		_ = c.Send(&api.HelloResponse{})
+	case *api.GetTimeRequest:
+		_ = c.Send(&api.GetTimeResponse{
+			EpochSeconds: uint32(time.Now().Unix()),
+			Timezone:     localTimezoneName(),
+		})
 		return true
-
-	case *api.ConnectRequest:
-		_ = c.Send(&api.ConnectResponse{})
-		return true
-
 	}
 
 	return false
+}
+
+func localTimezoneName() string {
+	if tz := os.Getenv("TZ"); tz != "" {
+		return tz
+	}
+	if time.Local != nil {
+		if name := time.Local.String(); name != "" && name != "Local" {
+			return name
+		}
+	}
+	_, offset := time.Now().Zone()
+	sign := "+"
+	if offset < 0 {
+		sign = "-"
+		offset = -offset
+	}
+	return fmt.Sprintf("UTC%s%02d:%02d", sign, offset/3600, (offset%3600)/60)
 }
 
 func (c *Client) Send(message proto.Message) error {
@@ -256,20 +354,18 @@ func (c *Client) Send(message proto.Message) error {
 }
 
 func (c *Client) SendAndWaitForResponse(message proto.Message, messageType uint64) (proto.Message, error) {
-	if err := c.Send(message); err != nil {
-		return nil, err
-	}
-	return c.waitForMessage(messageType)
-}
-
-func (c *Client) waitForMessage(messageType uint64) (proto.Message, error) {
+	// Register waiter before Send to avoid missing a fast response.
 	in := make(chan proto.Message, 1)
 	c.waitFor(messageType, in)
 	defer c.waitDone(messageType)
 
+	if err := c.Send(message); err != nil {
+		return nil, err
+	}
+
 	select {
-	case message := <-in:
-		return message, nil
+	case msg := <-in:
+		return msg, nil
 	case <-time.After(c.CommunicationTimeout):
 		return nil, types.ErrCommunicationTimeout
 	}

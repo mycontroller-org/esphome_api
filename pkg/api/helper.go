@@ -165,7 +165,7 @@ func TypeID(message interface{}) uint64 {
 	}
 
 	// convert from pointer to normal type
-	if reflect.ValueOf(message).Kind() == reflect.Ptr {
+	if reflect.ValueOf(message).Kind() == reflect.Pointer {
 		message = reflect.ValueOf(message).Elem().Interface()
 	}
 	switch message.(type) {

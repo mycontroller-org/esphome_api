@@ -46,13 +46,13 @@ var loginCmd = &cobra.Command{
 
 		_client, err := GetClient(deviceCfg, nil)
 		if err != nil {
-			fmt.Fprintln(cmd.ErrOrStderr(), "error on login", err)
+			_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "error on login", err)
 			return
 		}
 		if _client != nil {
 			deviceInfo, err := _client.DeviceInfo()
 			if err != nil {
-				fmt.Fprintln(cmd.ErrOrStderr(), "error on getting device information", err)
+				_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "error on getting device information", err)
 				return
 			}
 			// update device info
@@ -76,8 +76,8 @@ var loginCmd = &cobra.Command{
 			AddDevice(deviceCfg)
 			WriteConfigFile()
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Login successful.")
-			fmt.Fprintf(cmd.OutOrStdout(), "%+v\n", deviceInfo)
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Login successful.")
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "%+v\n", deviceInfo)
 		}
 	},
 }
@@ -92,7 +92,7 @@ var logoutCmd = &cobra.Command{
   esphomectl logout my_device_1:6053 my_device_2:6053`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 && CONFIG.Active == "" {
-			fmt.Fprintln(cmd.ErrOrStderr(), "There is no active device information.")
+			_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "There is no active device information.")
 			return
 		}
 
@@ -102,6 +102,6 @@ var logoutCmd = &cobra.Command{
 		}
 		WriteConfigFile()
 
-		fmt.Fprintln(cmd.OutOrStdout(), "Logout successful.")
+		_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Logout successful.")
 	},
 }

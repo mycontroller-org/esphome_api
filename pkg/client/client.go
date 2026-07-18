@@ -119,8 +119,10 @@ func (c *Client) Login(password string) error {
 		return err
 	}
 
+	// AuthenticationRequest/Response are deprecated in api.proto (ESPHome 2026.1.0+)
+	// but still required for pre-2026.1 devices that use api password.
 	message, err := c.SendAndWaitForResponse(
-		&api.AuthenticationRequest{Password: password},
+		&api.AuthenticationRequest{Password: password}, //nolint:staticcheck // SA1019: legacy password auth
 		api.AuthenticationResponseTypeID,
 	)
 	if err != nil {
@@ -130,7 +132,7 @@ func (c *Client) Login(password string) error {
 		}
 		return err
 	}
-	authResponse, ok := message.(*api.AuthenticationResponse)
+	authResponse, ok := message.(*api.AuthenticationResponse) //nolint:staticcheck // SA1019: legacy password auth
 	if !ok {
 		return fmt.Errorf("invalid response type:%T", message)
 	}
@@ -168,7 +170,7 @@ func (c *Client) DeviceInfo() (*types.DeviceInfo, error) {
 
 	info := message.(*api.DeviceInfoResponse)
 	di := &types.DeviceInfo{
-		UsesPassword:               info.UsesPassword,
+		UsesPassword:               info.UsesPassword, //nolint:staticcheck // SA1019: still reported by older firmware
 		Name:                       info.Name,
 		MacAddress:                 info.MacAddress,
 		EsphomeVersion:             info.EsphomeVersion,
@@ -248,7 +250,7 @@ func (c *Client) NoiseEncryptionSetKey(key []byte) (*api.NoiseEncryptionSetKeyRe
 
 // messageReader reads message from the node
 func (c *Client) messageReader() {
-	defer c.conn.Close()
+	defer func() { _ = c.conn.Close() }()
 	for {
 		select {
 		case <-c.stopChan:
@@ -295,7 +297,7 @@ func (c *Client) isExternal(message proto.Message) bool {
 	switch message.(type) {
 	case
 		*api.HelloResponse,
-		*api.AuthenticationResponse,
+		*api.AuthenticationResponse, //nolint:staticcheck // SA1019: filter legacy auth replies
 		*api.DisconnectResponse,
 		*api.PingResponse,
 		*api.DeviceInfoResponse,

@@ -18,16 +18,20 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// subscribe state changes
-	client.Send(&api.SubscribeStatesRequest{})
+	if err := client.Send(&api.SubscribeStatesRequest{}); err != nil {
+		log.Fatalln(err)
+	}
 
 	// wait for a second
 	<-time.After(1 * time.Second)
 
 	// take a picture
-	client.Send(&api.CameraImageRequest{Single: true})
+	if err := client.Send(&api.CameraImageRequest{Single: true}); err != nil {
+		log.Fatalln(err)
+	}
 
 	// wait 10 seconds
 	<-time.After(3 * time.Second)

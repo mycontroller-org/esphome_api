@@ -12,7 +12,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	err = client.Ping()
 	if err != nil {
